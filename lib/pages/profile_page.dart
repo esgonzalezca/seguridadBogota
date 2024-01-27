@@ -1,64 +1,68 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:startertemplate/pages/denuncias/MyCard.dart';
+import 'package:startertemplate/pages/map_point.dart';
 
-/*
+class ProfilePage extends StatefulWidget {
+  const ProfilePage({Key? key}) : super(key: key);
 
-P R O F I L E P A G E
+  @override
+  _ProfilePageState createState() => _ProfilePageState();
+}
 
-This is the ProfilePage, which the majority of apps need.
+class _ProfilePageState extends State<ProfilePage> {
+  List<LatLng> points = [];
+  int numberPoints = 0;
+  final List<CardData> cardDataList = [
+    // Agrega más datos según sea necesario
+  ];
+  @override
+  void initState() {
+    super.initState();
+    fetchDenuncias().then((_) {
+      // setState para reconstruir el widget después de que la función se complete
+      setState(() {
+        // Puedes hacer cualquier cosa aquí después de que la función se complete
+      });
+    });
+  }
 
-Some ideas:
+  Future<void> fetchDenuncias() async {
+    CollectionReference denuncias =
+        FirebaseFirestore.instance.collection('denuncias');
 
-- This could be a good place for the user to build a reputation system 
-like a star rating
+    try {
+      QuerySnapshot snapshot = await denuncias.get();
+      print(snapshot.docs.length);
+      numberPoints = snapshot.docs.length;
+      snapshot.docs.forEach((doc) {
+        // print(doc.get("descripcion"));
 
-- Show followers and following
+        LatLng point = new LatLng(doc.get("latitud"), doc.get("longitud"));
 
-- Could be a place to show what products/services they are selling/offering
-
-- Could be just a collection of photos and videos like Instagram
-
-*/
-
-class ProfilePage extends StatelessWidget {
-  const ProfilePage({super.key});
+        CardData cardData = CardData(
+            descripcion: doc.get("descripcion"),
+            hora: doc.get("hora"),
+            lugar: "hola",
+            latitud: doc.get("latitud"),
+            longitud: doc.get("longitud"));
+        cardDataList.add(cardData);
+        // points.add(point);
+        print('${doc.id} => ${doc.data()}');
+      });
+    } catch (error) {
+      print("Failed to fetch users: $error");
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    return ListView(
-      children: [
-        // top circle profile pic
-        Center(
-          child: Padding(
-            padding: const EdgeInsets.all(25.0),
-            child: Container(
-              height: 160,
-              width: 160,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.grey[200],
-              ),
-            ),
-          ),
-        ),
-
-        // grid of photos or items
-        GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: 10,
-          padding: const EdgeInsets.symmetric(horizontal: 10),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 2),
-          itemBuilder: (context, index) => Container(
-            height: 200,
-            margin: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(4),
-              color: Colors.grey[200],
-            ),
-          ),
-        ),
-      ],
+    return Container(
+      width: MediaQuery.of(context).size.width,
+      height: MediaQuery.of(context).size.height,
+      color: Colors.blue,
+      child: MapPoint(cardDataList: cardDataList),
     );
   }
 }
